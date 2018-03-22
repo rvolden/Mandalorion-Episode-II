@@ -2,20 +2,18 @@
 # Christopher Vollmers
 # Roger Volden
 
-import numpy as np
 import os
 import sys
+import numpy as np
 
+path = sys.argv[2]
+content_file = sys.argv[1]
+upstream_buffer = int(sys.argv[4])
+downstream_buffer = int(sys.argv[3])
 
-path=sys.argv[2]
-content_file=sys.argv[1]
-upstream_buffer=int(sys.argv[4])
-downstream_buffer=int(sys.argv[3])
-
-minimum_read_count=3
+minimum_read_count = 3
 
 def find_peaks(starts,ends):
-
     start_peaks={}
     end_peaks={}
     for position in sorted(starts):
@@ -23,22 +21,12 @@ def find_peaks(starts,ends):
             if not start_peaks.get(position):
                 for shift in np.arange(-upstream_buffer,downstream_buffer,1):
                     start_peaks[position+shift]=position
-
     for position in sorted(ends,reverse=True):
         if list(ends).count(position)>=minimum_read_count:
             if not end_peaks.get(position):
                 for shift in np.arange(-downstream_buffer,upstream_buffer,1):
                     end_peaks[position+shift]=position
-
-
-
     return start_peaks,end_peaks
-
-
-
-
-
-
 
 def collect_splice_events(path):
     splice_dict={}
@@ -259,18 +247,20 @@ def read_subreads(seq_file,infile):
 
 def main():
     for line in open(content_file):
-      b=line.strip().split('\t')
-      print (b)
-      infile=b[0]
-      fasta_file=b[1]
-      individual_path=b[2]
-      subreads_file=b[3]
-      os.system('mkdir '+individual_path+'/parsed_reads')
-      os.system('rm '+individual_path+'/parsed_reads/*')
-      subreads=read_subreads(subreads_file,infile)
-      splice_dict=splice_dict=collect_splice_events(path)
-      start_end_dict=sort_reads_into_splice_junctions(content_file,splice_dict,fasta_file,infile)
+      b = line.strip().split('\t')
+      print(b)
+      infile = b[0]
+      fasta_file = b[1]
+      individual_path = b[2]
+      subreads_file = b[3]
+      os.system('mkdir ' + individual_path + '/parsed_reads')
+      os.system('rm ' + individual_path + '/parsed_reads/*')
+      subreads = read_subreads(subreads_file, infile)
+      splice_dict = splice_dict = collect_splice_events(path)
+      start_end_dict = sort_reads_into_splice_junctions(content_file, splice_dict,
+                                                        fasta_file, infile)
 
       define_start_end_sites(start_end_dict,individual_path,subreads)
 
-main()
+if __name__ == '__main__':
+    main()
