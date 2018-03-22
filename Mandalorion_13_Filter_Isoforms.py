@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+# Christopher Vollmers
+# Roger Volden
+
 import sys
 import os
 
@@ -77,8 +81,3 @@ for isoform in isoforms:
     if minimum_3_overhang<=overhang3<=maximum_3_overhang and minimum_5_overhang<=overhang5<=maximum_5_overhang:
         if number>=minimum_reads and number/max(coverage_list)>=minimum_ratio:
             out.write('>'+isoform+'_'+str(round(number/max(coverage_list),2))+'\n'+isoforms[isoform]+'\n')
-
-
-
-
-

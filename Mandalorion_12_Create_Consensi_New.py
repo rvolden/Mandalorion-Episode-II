@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+# Christopher Vollmers
+# Roger Volden
+
 import sys
 import os
 import numpy as np
@@ -147,7 +151,7 @@ def determine_consensus(name, fasta,fastq):
     out_cons_file = open(poa_cons, 'w')
     out_cons_file.write('>' + best + '\n' + reads[best].replace('-', '') + '\n')
     out_cons_file.close()
- 
+
 
     final=poa_cons
     for i in np.arange(1,2,1):
@@ -172,11 +176,11 @@ def determine_consensus(name, fasta,fastq):
         except:
             pass
 
-    print(final)    
+    print(final)
     reads = read_fasta(final)
 #    if len(reads)==0:
 #        reads = read_fasta(poa_cons)
-        
+
     for read in reads:
         corrected_consensus = reads[read]
 
@@ -203,6 +207,3 @@ for line in open(path+'/isoform_list'):
 
     combined_consensus_file.write('>'+name+'_'+repeats+'\n'+corrected_consensus+'\n')
     combined_consensus_file.close()
-
-
-    

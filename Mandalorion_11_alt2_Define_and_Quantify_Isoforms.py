@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+# Christopher Vollmers
+# Roger Volden
+
 import numpy as np
 import os
 import sys
@@ -15,18 +19,18 @@ def find_peaks(starts,ends):
     start_peaks={}
     end_peaks={}
     for position in sorted(starts):
-        if list(starts).count(position)>=minimum_read_count: 
+        if list(starts).count(position)>=minimum_read_count:
             if not start_peaks.get(position):
-                for shift in np.arange(-upstream_buffer,downstream_buffer,1): 
-                    start_peaks[position+shift]=position                          
+                for shift in np.arange(-upstream_buffer,downstream_buffer,1):
+                    start_peaks[position+shift]=position
 
     for position in sorted(ends,reverse=True):
-        if list(ends).count(position)>=minimum_read_count: 
+        if list(ends).count(position)>=minimum_read_count:
             if not end_peaks.get(position):
-                for shift in np.arange(-downstream_buffer,upstream_buffer,1): 
-                    end_peaks[position+shift]=position                          
-                   
-                                        
+                for shift in np.arange(-downstream_buffer,upstream_buffer,1):
+                    end_peaks[position+shift]=position
+
+
 
     return start_peaks,end_peaks
 
@@ -47,11 +51,11 @@ def collect_splice_events(path):
         splice_right=int(a[2])
         for base in np.arange(splice_left,splice_right+1,1):
              splice_dict[chromosome][base]=a[3].split('_')[0]
-    return splice_dict           
+    return splice_dict
 
 
 
-                
+
 
 
 
@@ -89,7 +93,7 @@ def sort_reads_into_splice_junctions(content_file,splice_dict,fasta_file,infile)
         read_direction=a[8]
 
         start=int(a[15])
-        end=int(a[16]) 
+        end=int(a[16])
 
 
         if read_direction=='+':
@@ -118,20 +122,20 @@ def sort_reads_into_splice_junctions(content_file,splice_dict,fasta_file,infile)
                     try:
                       left_splice_site=splice_dict[chromosome][left_splice]
                     except:
-                      failed=1    
+                      failed=1
                     try:
                       right_splice_site=splice_dict[chromosome][right_splice]
                     except:
-                      failed=1 
-                     
+                      failed=1
+
                     if failed==0:
-                       identity+=str(left_splice_site)+'-'+str(right_splice_site)+'~' 
- 
+                       identity+=str(left_splice_site)+'-'+str(right_splice_site)+'~'
+
         if failed==0:
 
                 if not start_end_dict.get(identity):
                      start_end_dict[identity] = []
-                start_end_dict[identity].append((start,end,'>'+read_dict[name][0][1:]+'\n'+read_dict[name][1],left_extra,right_extra,read_direction))                
+                start_end_dict[identity].append((start,end,'>'+read_dict[name][0][1:]+'\n'+read_dict[name][1],left_extra,right_extra,read_direction))
 
 
 
@@ -141,7 +145,7 @@ def sort_reads_into_splice_junctions(content_file,splice_dict,fasta_file,infile)
 
 def define_start_end_sites(start_end_dict,individual_path,subreads):
     left_extras={}
-    right_extras={} 
+    right_extras={}
     file_set=set()
     isoform_counter=0
     isoform_dict={}
@@ -158,9 +162,9 @@ def define_start_end_sites(start_end_dict,individual_path,subreads):
         matched_positions=[]
         combination_counts={}
         left_extras[identity]={}
-        right_extras[identity]={} 
-        for start,end,read,left_extra,right_extra,read_direction in positions: 
-            try:      
+        right_extras[identity]={}
+        for start,end,read,left_extra,right_extra,read_direction in positions:
+            try:
                 left=start_dict[int(start)]
                 right=end_dict[int(end)]
 
@@ -177,15 +181,15 @@ def define_start_end_sites(start_end_dict,individual_path,subreads):
                     combination_counts[(left,right)]+=1
                 matched_positions.append((left,right,read,read_direction))
             except:
-                pass 
-                
+                pass
+
 #        if '5l242602' in identity and 'chr16' in identity:
 #            print (left_extras[identity][(left,right)],right_extras[identity][(left,right)])
 
 
-        for left,right,read,read_direction in matched_positions: 
+        for left,right,read,read_direction in matched_positions:
 
-           
+
 
 #            if np.average(left_extras[identity][(left,right)])<60 and np.average(right_extras[identity][(left,right)])<50:
             new_identity=identity+'_'+read_direction+'_'+str(left)+'_'+str(right)+'_'+str(round(np.median(left_extras[identity][(left,right)]),2))+'_'+str(round(np.median(right_extras[identity][(left,right)]),2))
@@ -209,13 +213,13 @@ def define_start_end_sites(start_end_dict,individual_path,subreads):
 
             file_set.add(individual_path+'/parsed_reads/'+filename+'.fasta'+'\t'+individual_path+'/parsed_reads/'+filename+'_subreads.fastq'+'\t'+new_identity+'\n')
             read=read.split('_')[0][1:]
-            subread_list=subreads[read]  
-            for subread,sequence,qual in subread_list:  
+            subread_list=subreads[read]
+            for subread,sequence,qual in subread_list:
                 out_reads_subreads.write(subread+'\n'+sequence+'\n+\n'+qual+'\n')
-            out_reads_subreads.close() 
-           
+            out_reads_subreads.close()
 
-    out=open(individual_path+'isoform_list','w')     
+
+    out=open(individual_path+'isoform_list','w')
     for item in file_set:
         out.write(item)
     out.close()
@@ -224,7 +228,7 @@ def define_start_end_sites(start_end_dict,individual_path,subreads):
 def read_subreads(seq_file,infile):
 
     read_seq={}
-        
+
     length=0
     for line2 in open(seq_file):
         length+=1
@@ -232,7 +236,7 @@ def read_subreads(seq_file,infile):
     counter=0
     for line in open(infile):
         name=line.strip().split('\t')[9].split('_')[0]
-        read_seq[name]=[]        
+        read_seq[name]=[]
 
     while counter<length:
         name=seq_file_open.readline().strip()
@@ -240,14 +244,14 @@ def read_subreads(seq_file,infile):
         plus=seq_file_open.readline().strip()
         qual=seq_file_open.readline().strip()
 
-        
+
         root_name=name[1:].split('_')[0]
 
-        try: 
-            read_seq[root_name].append((name,seq,qual)) 
+        try:
+            read_seq[root_name].append((name,seq,qual))
         except:
             pass
-    
+
         counter+=4
 
     return read_seq
@@ -259,16 +263,14 @@ def main():
       print (b)
       infile=b[0]
       fasta_file=b[1]
-      individual_path=b[2] 
-      subreads_file=b[3]    
+      individual_path=b[2]
+      subreads_file=b[3]
       os.system('mkdir '+individual_path+'/parsed_reads')
       os.system('rm '+individual_path+'/parsed_reads/*')
       subreads=read_subreads(subreads_file,infile)
       splice_dict=splice_dict=collect_splice_events(path)
-      start_end_dict=sort_reads_into_splice_junctions(content_file,splice_dict,fasta_file,infile)  
+      start_end_dict=sort_reads_into_splice_junctions(content_file,splice_dict,fasta_file,infile)
 
       define_start_end_sites(start_end_dict,individual_path,subreads)
 
 main()
-
-
