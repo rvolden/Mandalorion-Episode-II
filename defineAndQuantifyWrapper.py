@@ -13,7 +13,8 @@ parser.add_argument('-p', '--path', type=str)
 #parser.add_argument('-g','--gmap_genome',type=str)
 #parser.add_argument('-l','--gene_list',type=str)
 #parser.add_argument('-i','--illumina_content_file',type=str, default='-')
-#parser.add_argument('-r','--refine',type=str,default=None,choices=['g','gi','i','n'])  # if set to 'i' or 'gi' and no illumina_content_file is provided, the i will be ignored
+#parser.add_argument('-r','--refine',type=str,default=None,choices=['g','gi','i','n'])  
+# if set to 'i' or 'gi' and no illumina_content_file is provided, the i will be ignored
 
 parser.add_argument('-u', '--upstream_buffer', type=str)
 parser.add_argument('-d', '--downstream_buffer', type=str)
@@ -41,8 +42,8 @@ minimum_3_overhang = args.minimum_3_overhang
 maximum_5_overhang = args.maximum_5_overhang
 maximum_3_overhang = args.maximum_3_overhang
 
-os.system('python3 Mandalorion_6_SS.py %s %s %s %s %s ' %(content_file, path, '0.05', genome_annotation, 'g'))
-os.system('python3 Mandalorion_11_alt2_Define_and_Quantify_Isoforms.py %s %s %s %s' %(content_file, path,downstream_buffer,upstream_buffer)) # This script sort raw reads into isoform bins. The two number variables determine the window around TSS and TES in which read ends can fall and still be matched to the site.
+os.system('python3 spliceSites.py %s %s %s %s %s ' %(content_file, path, '0.05', genome_annotation, 'g'))
+os.system('python3 defineAndQuantifyIsoforms.py %s %s %s %s' %(content_file, path,downstream_buffer,upstream_buffer)) # This script sort raw reads into isoform bins. The two number variables determine the window around TSS and TES in which read ends can fall and still be matched to the site.
 
 for line in open(content_file):
     subpath=line.strip().split('\t')[2]
