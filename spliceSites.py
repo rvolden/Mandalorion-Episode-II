@@ -242,96 +242,96 @@ def collect_reads(content_file):
                 blockstarts = a[20].split(',')[:-1]
                 readstarts = a[19].split(',')[:-1]
 
-            if direction == '+':
-                start_seq, end_seq = 'S', 'E'
-                left_match, right_match = 'TSS', 'TES'
+                if direction == '+':
+                    start_seq, end_seq = 'S', 'E'
+                    left_match, right_match = 'TSS', 'TES'
 
-            else:
-                start_seq, end_seq= 'E', 'S'
-                left_match, right_match = 'TES', 'TSS'
+                else:
+                    start_seq, end_seq= 'E', 'S'
+                    left_match, right_match = 'TES', 'TSS'
 
-            coverage_set = set()
-            previous_blocksize, previous_start = -1, -1
-            previous_blockend = np.inf
-            intron, indel, indel1 = 0, 0, 0
-            low_bounds, up_bounds = [], []
-            aligned_bases=0
-            for x in range(0, len(blocksizes)):
-                blockstart = int(blockstarts[x])
-                blocksize = int(blocksizes[x])
-                readstart = int(readstarts[x])
-                aligned_bases += blocksize
-                blockend = blockstart + blocksize
-                if blocksize > 10:
-                    for y in range(0, blocksize, 10):
-                        rounded = myround(blockstart + y)
-                        coverage_set.add(rounded)
-                    for yy in range(y, blocksize):
-                        rounded = myround(blockstart + yy)
-                        coverage_set.add(rounded)
-                    if previous_start == -1:
-                        previous_start = blockstart
-                        min_length = 10
-                    else:
-                        min_length = 10
-
-                    if blockstart - previous_blockend > 20:
-                        previous_start = blockstart
-
-                    if blockend - previous_start > min_length:
-                        if intron == 1:
-                            up_bounds.append([previous_start, indel1, blockend])
-                            low_bounds.append([remember_blockend,
-                                               remember_indel1, remember_start])
-                          intron = 0
+                coverage_set = set()
+                previous_blocksize, previous_start = -1, -1
+                previous_blockend = np.inf
+                intron, indel, indel1 = 0, 0, 0
+                low_bounds, up_bounds = [], []
+                aligned_bases=0
+                for x in range(0, len(blocksizes)):
+                    blockstart = int(blockstarts[x])
+                    blocksize = int(blocksizes[x])
+                    readstart = int(readstarts[x])
+                    aligned_bases += blocksize
+                    blockend = blockstart + blocksize
+                    if blocksize > 10:
+                        for y in range(0, blocksize, 10):
+                            rounded = myround(blockstart + y)
+                            coverage_set.add(rounded)
+                        for yy in range(y, blocksize):
+                            rounded = myround(blockstart + yy)
+                            coverage_set.add(rounded)
+                        if previous_start == -1:
+                            previous_start = blockstart
+                            min_length = 10
                         else:
-                            try:
-                                next_blockstart = int(blockstarts[x+1])
-                                next_blocksize = int(blocksizes[x+1])
-                                next_readstart = int(readstarts[x+1])
+                            min_length = 10
 
-                                insert = next_blockstart - blockend
-                                if insert > 50:
-                                    indel1 = next_readstart \
-                                             - readstart \
-                                             + blocksize
-                                    remember_blockend = blockend
-                                    remember_indel1 = indel1
-                                    remember_start = previous_start
-                                    intron = 1
-                                    previous_start = next_blockstart
-                                    blockend = next_blockstart
-                            except:
-                                pass
-                    previous_blockend = blockend
+                        if blockstart - previous_blockend > 20:
+                            previous_start = blockstart
 
-            for rounded in coverage_set:
-                try:
-                    histo_coverage[chromosome][rounded] += 1
-                except:
-                    histo_coverage[chromosome][rounded] = 1
+                        if blockend - previous_start > min_length:
+                            if intron == 1:
+                                up_bounds.append([previous_start, indel1, blockend])
+                                low_bounds.append([remember_blockend,
+                                                   remember_indel1, remember_start])
+                                intron = 0
+                            else:
+                                try:
+                                    next_blockstart = int(blockstarts[x+1])
+                                    next_blocksize = int(blocksizes[x+1])
+                                    next_readstart = int(readstarts[x+1])
 
-            if aligned_bases/length > 0.70:
-                for low_bound, indel1, blockend in low_bounds:
-                    chromosome_list_left.add(chromosome)
-                    if not histo_left_bases.get(chromosome):
-                        histo_left_bases[chromosome] = {}
-                    if not histo_left_bases[chromosome].get(low_bound):
-                        histo_left_bases[chromosome][low_bound] = []
-                    histo_left_bases[chromosome][low_bound].append([indel1, begin,
-                                                                    span, coverage_set,
-                                                                    left_match,
-                                                                    right_match])
-                for up_bound, indel1, blockend in up_bounds:
-                    chromosome_list_right.add(chromosome)
-                    if not histo_right_bases.get(chromosome):
-                        histo_right_bases[chromosome] = {}
-                    if not histo_right_bases[chromosome].get(up_bound):
-                        histo_right_bases[chromosome][up_bound] = []
-                    histo_right_bases[chromosome][up_bound].append([indel1, begin,
-                                                                    span, coverage_set,
-                                                                    left_match,
-                                                                    right_match])
+                                    insert = next_blockstart - blockend
+                                    if insert > 50:
+                                        indel1 = next_readstart \
+                                                 - readstart \
+                                                 + blocksize
+                                        remember_blockend = blockend
+                                        remember_indel1 = indel1
+                                        remember_start = previous_start
+                                        intron = 1
+                                        previous_start = next_blockstart
+                                        blockend = next_blockstart
+                                except:
+                                    pass
+                        previous_blockend = blockend
+
+                for rounded in coverage_set:
+                    try:
+                        histo_coverage[chromosome][rounded] += 1
+                    except:
+                        histo_coverage[chromosome][rounded] = 1
+
+                if aligned_bases/length > 0.70:
+                    for low_bound, indel1, blockend in low_bounds:
+                        chromosome_list_left.add(chromosome)
+                        if not histo_left_bases.get(chromosome):
+                            histo_left_bases[chromosome] = {}
+                        if not histo_left_bases[chromosome].get(low_bound):
+                            histo_left_bases[chromosome][low_bound] = []
+                        histo_left_bases[chromosome][low_bound].append([indel1, begin,
+                                                                        span, coverage_set,
+                                                                        left_match,
+                                                                        right_match])
+                    for up_bound, indel1, blockend in up_bounds:
+                        chromosome_list_right.add(chromosome)
+                        if not histo_right_bases.get(chromosome):
+                            histo_right_bases[chromosome] = {}
+                        if not histo_right_bases[chromosome].get(up_bound):
+                            histo_right_bases[chromosome][up_bound] = []
+                        histo_right_bases[chromosome][up_bound].append([indel1, begin,
+                                                                        span, coverage_set,
+                                                                        left_match,
+                                                                        right_match])
 
     chromosome_list = chromosome_list_left & chromosome_list_right
     return histo_left_bases, histo_right_bases, chromosome_list, histo_coverage
