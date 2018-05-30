@@ -12,8 +12,8 @@ subsample = int(sys.argv[2])
 #os.system('mkdir '+temp_folder)
 
 poa = 'poa'
+# Change this if you want to subsample more or less reads per isoform
 score_matrix = '/home/vollmers/scripts/ONT/NUC.4.4.mat'
-  # Change this if you want to subsample more or less reads per isoform
 
 racon = '/home/vollmers/Downloads/racon/bin/racon'
 minimap2 = '/home/vollmers/Downloads/minimap2-2.5_x64-linux/minimap2'
@@ -84,7 +84,7 @@ def determine_consensus(name, fasta, fastq):
     out = open(out_Fq, 'w')
 
     indexes = np.random.choice(np.arange(0, len(fastq_reads)),
-                               min(len(fastq_reads), subsample))
+                               min(len(fastq_reads), subsample), replace=False)
     print('XXXXXXXXXXXXXXXXXX', indexes)
     subsample_fastq_reads = []
     for index in indexes:
@@ -99,31 +99,6 @@ def determine_consensus(name, fasta, fastq):
     final = temp_folder + '/corrected_consensus.fasta'
     overlap = temp_folder +'/overlaps.sam'
     pairwise = temp_folder + '/prelim_consensus.fasta'
-
-#    PIR = temp_folder + '/' + name + 'alignment.fasta'
-#    os.system('%s -read_fasta %s -hb -pir %s
-#              %s >./poa_messages.txt 2>&1'
-#              %(poa, out_F, PIR, score_matrix))
-#    reads = read_fasta(PIR)
-#    print('poa done')
-
-#    if repeats == '2':
-#        Qual_Fasta = open(pairwise, 'w')
-#        for read in reads:
-#            if 'CONSENS' not in read:
-#                Qual_Fasta.write('>' + read + '\n' + reads[read] + '\n')
-#        Qual_Fasta.close()
-#        os.system('%s %s %s %s >> %s'
-#                  %(consensus, pairwise, out_Fq, name, poa_cons))
-
-#    else:
-#        for read in reads:
-#          if 'CONSENS0' in read:
-#            out_cons_file = open(poa_cons, 'w')
-#            out_cons_file.write('>' + name + '\n'
-#                                + reads[read].replace('-', '') + '\n')
-#            out_cons_file.close()
-#    print('cosensus done')
 
     max_coverage = 0
     reads = read_fasta(out_F)
@@ -154,11 +129,11 @@ def determine_consensus(name, fasta, fastq):
                                                '_' + str(i) + '.fasta')
 
             print(i, minimap2, input_cons, out_Fq, overlap)
-            os.system('%s --secondary=no -ax map-ont
+            os.system('%s --secondary=no -ax map-ont\
                       %s %s > %s 2> ./minimap2_messages.txt'
                       % (minimap2, input_cons, out_Fq, overlap))
             print('minimap2 done')
-            os.system('%s --sam --bq 5 -t 1
+            os.system('%s --sam --bq 5 -t 1\
                       %s %s %s %s >> ./racon_messages.txt 2>&1'
                       %(racon,out_Fq, overlap, input_cons, output_cons))
             print('racon done')
