@@ -58,11 +58,11 @@ def sort_reads_into_splice_junctions(content_file, splice_dict,
             tempSeqs = []
         else:
             tempSeqs.append(line)
-    fasta_file.close()
+    # fasta_file.close()
     sequences.append(''.join(tempSeqs).upper())
     sequences = sequences[1:]
     for i in range(len(headers)):
-        readDict[headers[i]] = sequences[i]
+        readDict[headers[i].split('_')[0]] = [headers[i], sequences[i]]
     read_dict = readDict
 
     print(len(read_dict))
@@ -109,8 +109,8 @@ def sort_reads_into_splice_junctions(content_file, splice_dict,
             if not start_end_dict.get(identity):
                 start_end_dict[identity] = []
             start_end_dict[identity].append((start, end,
-                                             '>' + read_dict[name][0][1:]
-                                             + '\n' + read_dict[name][1],
+                                             '>' + read_dict[name][0] + '\n'
+                                             + read_dict[name][1] + '\n',
                                              left_extra,
                                              right_extra,
                                              read_direction))
@@ -122,8 +122,8 @@ def define_start_end_sites(start_end_dict, individual_path, subreads):
     isoform_counter, isoform_dict = 0, {}
 
     for identity in start_end_dict:
-        if 'chr16' in identity:
-            print(identity)
+        # if 'chr16' in identity:
+        #     print(identity)
         positions = np.array(start_end_dict[identity])
         starts = np.array(positions[:,0], dtype=int)
         ends = np.array(positions[:,1], dtype=int)
@@ -156,7 +156,7 @@ def define_start_end_sites(start_end_dict, individual_path, subreads):
             new_identity = identity + '_' + read_direction + '_' + str(left) \
                            + '_' + str(right) + '_' \
                            + str(round(medianLeft, 2)) \
-                           + '_' + str(round(medianRight), 2)
+                           + '_' + str(round(medianRight, 2))
             if not isoform_dict.get(new_identity):
                 isoform_counter += 1
                 isoform_dict[new_identity] = isoform_counter
