@@ -6,18 +6,77 @@ import sys
 import os
 import numpy as np
 
-path = sys.argv[1]
-temp_folder = path + '/parsed_reads'
-subsample = int(sys.argv[2])
+# path = sys.argv[1]
+# temp_folder = path + '/parsed_reads'
+# subsample = int(sys.argv[2])
+# config = sys.argv[3]
 #os.system('mkdir '+temp_folder)
 
-poa = 'poa'
-# Change this if you want to subsample more or less reads per isoform
-score_matrix = '/home/vollmers/scripts/ONT/NUC.4.4.mat'
+def argParser():
+    parser = argparse.ArgumentParser(description = 'Makes consensus sequences \
+                                                    from R2C2 reads.',
+                                     add_help = True,
+                                     prefix_chars = '-')
+    parser.add_argument('--path', '-p', type=str, action='store', default=os.getcwd(),
+                        help='Directory where all the files are/where they will end up.\
+                              Defaults to your current directory.')
+    parser.add_argument('--subsample', '-s', type=int, action='store')
+    parser.add_argument('--config', '-c', type=str, action='store', default='',
+                        help='If you want to use a config file to specify paths to\
+                              programs, specify them here. Use for poa, racon, water,\
+                              blat, and minimap2 if they are not in your path.')
+    parser.add_argument('--matrix', '-m', type=str, action='store',
+                        default='NUC.4.4.mat',
+                        help='Score matrix to use for poa.\
+                              Defaults to NUC.4.4.mat.')
+    return vars(parser.parse_args())
 
-racon = '/home/vollmers/Downloads/racon/bin/racon'
-minimap2 = '/home/vollmers/Downloads/minimap2-2.5_x64-linux/minimap2'
-consensus = '/home/vollmers/scripts/ONT/R2C2/consensus.py'
+def configReader(configIn):
+    '''Parses the config file.'''
+    progs = {}
+    for line in open(configIn):
+        if line.startswith('#') or not line.rstrip().split():
+            continue
+        line = line.rstrip().split('\t')
+        progs[line[0]] = line[1]
+    # should have minimap, poa, racon, water, consensus
+    # check for extra programs that shouldn't be there
+    possible = set(['poa', 'minimap2', 'water', 'consensus', 'racon', 'blat'])
+    inConfig = set()
+    for key in progs.keys():
+        inConfig.add(key)
+        if key not in possible:
+            raise Exception('Check config file')
+    # check for missing programs
+    # if missing, default to path
+    for missing in possible-inConfig:
+        if missing == 'consensus':
+            path = 'consensus.py'
+        else:
+            path = missing
+        progs[missing] = path
+        sys.stderr.write('Using ' + str(missing)
+                         + ' from your path, not the config file.\n')
+    return progs
+
+args = argParser()
+path = args['path']
+temp_folder = path + '/parsed_reads'
+subsample = args['subsample']
+score_matrix = args['matrix']
+
+if args['config']:
+    progs = configReader(args['config'])
+    minimap2 = progs['minimap2']
+    poa = progs['poa']
+    racon = progs['racon']
+    water = progs['water']
+    consensus = progs['consensus']
+else:
+    minimap2, poa, racon, water = 'minimap2', 'poa', 'racon', 'water'
+    consensus = 'consensus.py'
+
+consensus = 'python3 ' + consensus
 
 def read_fastq_file(seq_file):
     '''

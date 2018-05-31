@@ -8,7 +8,9 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-c', '--content_file', type=str)
+parser.add_argument('-f', '--config_file', type=str)
 parser.add_argument('-p', '--path', type=str)
+parser.add_argument('-m', '--score_matrix', type=str)
 #parser.add_argument('-a','--genome_annotation',type=str)
 #parser.add_argument('-g','--gmap_genome',type=str)
 #parser.add_argument('-l','--gene_list',type=str)
@@ -30,7 +32,9 @@ parser.add_argument('-T', '--maximum_3_overhang', type=str)
 args = parser.parse_args()
 
 content_file = args.content_file         # file containing paths to psl and fasta/q files you want analyzed
+config_file = args.config_file
 path = args.path + '/'	         #path where you want your output files to go
+matrix = args.score_matrix
 upstream_buffer = args.upstream_buffer
 downstream_buffer = args.downstream_buffer
 subsample_consensus = args.subsample_consensus
@@ -47,5 +51,5 @@ os.system('python3 defineAndQuantifyIsoforms.py %s %s %s %s' %(content_file, pat
 
 for line in open(content_file):
     subpath = line.strip().split('\t')[2]
-    os.system('python3 createConsensi.py %s %s ' %(subpath,subsample_consensus))
+    os.system('python3 createConsensi.py -p %s -s %s -c %s -m %s' %(subpath, subsample_consensus, config_file, matrix))
     os.system('python3 filterIsoforms.py %s %s %s %s %s %s %s %s ' %(subpath,subpath+'/Isoform_Consensi.fasta',minimum_ratio,minimum_reads,maximum_5_overhang,maximum_3_overhang,minimum_5_overhang,minimum_3_overhang))
