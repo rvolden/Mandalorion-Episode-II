@@ -74,11 +74,8 @@ def determine_coverage(coverage_area, chromosome, reverse,
     '''
     coverage = [0]
     coverage_area2 = []
-    coverage_area3 = []
-    for covered_position in set(coverage_area):
-         coverage_area3.append(covered_position)
-         if coverage_area.count(covered_position) > 1:
-               coverage_area2.append(covered_position)
+    for covered_position in set(coverage_area) and coverage_area.count(covered_position) > 1:
+        coverage_area2.append(covered_position)
 
     coverage_area = sorted(coverage_area2, reverse=reverse)
     counter = 0
@@ -293,8 +290,7 @@ def collect_reads(content_file):
                                     insert = next_blockstart - blockend
                                     if insert > 50:
                                         indel1 = next_readstart \
-                                                 - readstart \
-                                                 + blocksize
+                                                 - (readstart + blocksize)
                                         remember_blockend = blockend
                                         remember_indel1 = indel1
                                         remember_start = previous_start
