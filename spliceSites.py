@@ -74,8 +74,9 @@ def determine_coverage(coverage_area, chromosome, reverse,
     '''
     coverage = [0]
     coverage_area2 = []
-    for covered_position in set(coverage_area) and coverage_area.count(covered_position) > 1:
-        coverage_area2.append(covered_position)
+    for covered_position in set(coverage_area):
+        if coverage_area.count(covered_position) > 1:
+            coverage_area2.append(covered_position)
 
     coverage_area = sorted(coverage_area2, reverse=reverse)
     counter = 0
