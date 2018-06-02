@@ -86,11 +86,6 @@ Only isoforms with median number of un-aligned bases on the 5' end between these
 Only isoforms with median number of un-aligned bases on the 3' end between these numbers are reported. We use 0 and 60 but this numbers may be different based on your cDNA adapters
 
 
-* takes 5'-3' oriented full length cDNA reads
-* subreads
-* alignment (reads to genome)
-* gtf for annotations
-
 Example command:
 ```
 python3 defineAndQuantifyWrapper.py -c content_file -p /path/to/data/ -u 5 -d 30 -s 200 -r 0.05 -R 3 -i 0 -t 0 -I 100 -T 60 -g gencode.v26.annotation.gtf -m NUC.4.4.mat -f example_config
