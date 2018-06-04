@@ -1,5 +1,5 @@
 # Mandalorion Episode II #
-Attack of the Isoforms
+*Attack of the Isoforms*
 
 Takes R2C2/C3POa data and defines high confidence isoforms. 
 
