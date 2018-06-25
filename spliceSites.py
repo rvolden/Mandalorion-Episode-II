@@ -140,67 +140,66 @@ def find_peaks(density_dict, out, peaks, reverse, cutoff, base_cutoff_min,
     for entry, density in sorted(entry_list,
                                  key=lambda x: sum(np.array(x[1])[:,2]),
                                  reverse=True):
-        if len(density) >= minimum_read_count \
-           and not peak_areas[chromosome][side].get(entry):
+        if len(density) >= minimum_read_count:
+            if not peak_areas[chromosome][side].get(entry):
 
-            best_extra_list, peak_center, bases, \
-            coverage_area, best_direction_l, best_direction_r \
-            = scan_for_best_bin(entry, distance_range, iterator_shift,
-                                density_dict, base_cutoff_min,
-                                base_cutoff_max, peak_areas,
-                                chromosome, side)
+                best_extra_list, peak_center, bases, \
+                coverage_area, best_direction_l, best_direction_r \
+                = scan_for_best_bin(entry, distance_range, iterator_shift,
+                                    density_dict, base_cutoff_min,
+                                    base_cutoff_max, peak_areas,
+                                    chromosome, side)
 
-            coverage, coverage_area \
-            = determine_coverage(coverage_area, chromosome, reverse,
-                                 peak_center, histo_coverage)
+                coverage, coverage_area \
+                = determine_coverage(coverage_area, chromosome, reverse,
+                                     peak_center, histo_coverage)
 
-            if coverage > 0:
-                proportion = round(sum(best_extra_list)/coverage, 3)
-                print(chromosome + '\t' + str(peak_center - 1) + '\t'
-                      + str(peak_center + 1) + '\t' + str(proportion))
-                if proportion > cutoff:
-                    try:
-                        Left_TSS = best_direction_l['TSS']
-                    except:
-                        Left_TSS = 0
-                    try:
-                        Left_TES = best_direction_l['TES']
-                    except:
-                        Left_TES = 0
-                    try:
-                        Right_TSS = best_direction_r['TSS']
-                    except:
-                        Right_TSS = 0
-                    try:
-                        Right_TES = best_direction_r['TES']
-                    except:
-                        Right_TES = 0
-                    Left_to_Right = Left_TSS + Right_TES
-                    Right_to_Left = Left_TES + Right_TSS
-                    Type = '-'
+                if coverage > 0:
+                    proportion = round(sum(best_extra_list)/coverage, 3)
+                    print(chromosome + '\t' + str(peak_center - 1) + '\t'
+                          + str(peak_center + 1) + '\t' + str(proportion))
+                    if proportion > cutoff:
+                        try:
+                            Left_TSS = best_direction_l['TSS']
+                        except:
+                            Left_TSS = 0
+                        try:
+                            Left_TES = best_direction_l['TES']
+                        except:
+                            Left_TES = 0
+                        try:
+                            Right_TSS = best_direction_r['TSS']
+                        except:
+                            Right_TSS = 0
+                        try:
+                            Right_TES = best_direction_r['TES']
+                        except:
+                            Right_TES = 0
+                        Left_to_Right = Left_TSS + Right_TES
+                        Right_to_Left = Left_TES + Right_TSS
+                        Type = '-'
 
-                    if Left_to_Right < Right_to_Left and reverse:
-                        Type = '3'
-                    elif Left_to_Right < Right_to_Left and not reverse:
-                        Type = '5'
-                    elif Left_to_Right > Right_to_Left and reverse:
-                        Type = '5'
-                    elif Left_to_Right > Right_to_Left and not reverse:
-                        Type = '3'
+                        if Left_to_Right < Right_to_Left and reverse:
+                            Type = '3'
+                        elif Left_to_Right < Right_to_Left and not reverse:
+                            Type = '5'
+                        elif Left_to_Right > Right_to_Left and reverse:
+                            Type = '5'
+                        elif Left_to_Right > Right_to_Left and not reverse:
+                            Type = '3'
 
-                    if Type != '-':
-                        peaks += 1
-                        out.write(chromosome + '\t'
-                                  + str(peak_center-splice_site_width)
-                                  + '\t' + str(peak_center+splice_site_width)
-                                  + '\t' + str(Type) + side + str(peaks) + '_'
-                                  + str(peak_center-splice_site_width) + '_'
-                                  + str(peak_center+splice_site_width) + '_'
-                                  + str(proportion) + '\t' + str(peaks) + '\n')
-                        for base in range(peak_center - splice_site_width,
-                                          peak_center + splice_site_width):
-                            peak_areas[chromosome][side][base] = 1
-
+                        if Type != '-':
+                            peaks += 1
+                            out.write(chromosome + '\t'
+                                      + str(peak_center-splice_site_width)
+                                      + '\t' + str(peak_center+splice_site_width)
+                                      + '\t' + str(Type) + side + str(peaks) + '_'
+                                      + str(peak_center-splice_site_width) + '_'
+                                      + str(peak_center+splice_site_width) + '_'
+                                      + str(proportion) + '\t' + str(peaks) + '\n')
+                            for base in range(peak_center - splice_site_width,
+                                              peak_center + splice_site_width):
+                                peak_areas[chromosome][side][base] = 1
         else:
             break
 
