@@ -5,7 +5,7 @@
 import sys
 import numpy as np
 
-content_file  =  sys.argv[1]
+content_file = sys.argv[1]
 out_path = sys.argv[2]
 cutoff = float(sys.argv[3])
 genome_file = sys.argv[4]
@@ -19,7 +19,22 @@ def scan_for_best_bin(entry, distance_range, iterator_shift, density_dict,
                       base_cutoff_min, base_cutoff_max,
                       peak_areas, chromosome, side):
     '''
-    Stuff about the inputs, outputs, and how it works
+    Inputs:
+        entry (dict): bound:[features] for whichever chromosome
+        distance_range (list): double the splice site width
+        iterator_shift (int): determines which way you iterate (f/r)
+        density_dict (dict): same as histo_left/right_bases but for a chromosome
+        base_cutoff_min (int, 0): arbitrary lower cutoff
+        base_cutoff_max (int, 5): arbitrary upper cutoff
+        peak_areas (dict): keeps track of chromosome regions with peaks
+        chromosome (str): which chromosome
+        side (str): which direction to look (l/r)
+    Outputs:
+        best_extra_list (list): should be int, counts how many features
+        peak_center (int): position of the center of the peak
+        bases (list): distance b/w aligned blocks
+        coverage_area (list): contains positions that were covered
+        best_direction_l/r (dict): keeps track of highest counts in dist range
     '''
 
     best_extra_list, peak_center, bases = [], 0, []
@@ -35,8 +50,7 @@ def scan_for_best_bin(entry, distance_range, iterator_shift, density_dict,
             except KeyError:
                pass
         if not called:
-             highest_y = 0
-             highest_y_pos = 0
+             highest_y, highest_y_pos = 0, 0
              for y in distance_range:
                 try:
                     for item in density_dict[entry+x+y]:
@@ -58,7 +72,7 @@ def scan_for_best_bin(entry, distance_range, iterator_shift, density_dict,
         if base_cutoff_min <= np.median(extra_list_bases) <= base_cutoff_max:
             if sum(extra_list_expression) > sum(best_extra_list):
                 best_extra_list = extra_list_expression
-                peak_center = entry+x
+                peak_center = entry + x
                 bases = extra_list_bases
                 coverage_area = coverage_set
                 best_direction_l = direction_l
@@ -70,8 +84,17 @@ def scan_for_best_bin(entry, distance_range, iterator_shift, density_dict,
 def determine_coverage(coverage_area, chromosome, reverse,
                        peak_center, histo_coverage):
     '''
-    Insert docstring
+    Inputs:
+        coverage_area (list): contains positions that were covered
+        chromosome (str): which chromosome
+        reverse (bool): determines which way you read the sequence
+        peak_center (int): position of the center of the peak
+        histo_coverage (dict): approximate positions of alignment starts
+    Outputs:
+        coverage (int): how many times the most covered feature was covered
+        coverage_area (list): contains positions that were covered
     '''
+
     coverage = [0]
     coverage_area2 = []
     for covered_position in set(coverage_area):
@@ -102,6 +125,9 @@ def determine_coverage(coverage_area, chromosome, reverse,
     return coverage, coverage_area
 
 def read_seq_file(seq_file):
+    '''
+    Reads FASTA files and returns a dictionary of header:seq.
+    '''
     read_seq = {}
     length = 0
     for line2 in open(seq_file):
@@ -121,9 +147,22 @@ def myround(x, base=10):
     return int(base * round(float(x)/base))
 
 def find_peaks(density_dict, out, peaks, reverse, cutoff, base_cutoff_min,
-               base_cutoff_max, histo_coverage, side, peak_areas,chromosome):
+               base_cutoff_max, histo_coverage, side, peak_areas, chromosome):
     '''
-    Insert docstring
+    Inputs:
+        density_dict (dict): same as histo_left/right_bases but for a chromosome
+        out (file): output bed file
+        peaks (int): how many peaks
+        reverse (bool): determines which way you read the sequence
+        cutoff (float): inversely proportional to coverage
+        base_cutoff_min (int, 0): arbitrary lower cutoff
+        base_cutoff_max (int, 5): arbitrary upper cutoff
+        histo_coverage (dict): approximate positions of alignment starts
+        side (str): which direction to look (l/r)
+        peak_areas (dict): keeps track of chromosome regions with peaks
+        chromosome (str): which chromosome
+    Outputs:
+        peaks and peak_areas
     '''
 
     if not reverse:
@@ -207,7 +246,10 @@ def find_peaks(density_dict, out, peaks, reverse, cutoff, base_cutoff_min,
 
 def collect_reads(content_file):
     '''
-    Insert docstring
+    Takes a content file and returns
+        histo_left/right_bases (dict): information around upper/lower bounds
+        chromosome_list (set): chromosomes with decent alignments
+        histo_coverage (dict): approximate positions of alignment starts
     '''
 
     histo_left_bases, histo_right_bases = {}, {}
@@ -229,16 +271,18 @@ def collect_reads(content_file):
 
             if not histo_coverage.get(chromosome):
                 histo_coverage[chromosome] = {}
-
+            # matches, dir, query seq name
             score, direction, name = int(a[0]), a[8], a[9]
             coverage = int(name.split('_')[3])
+            # collect necessary info from psl file
             if coverage >= minimum_read_coverage:
-                length=int(name.split('_')[5].split('|')[0])
+                length = int(name.split('_')[5].split('|')[0])
                 begin, span = int(a[15]), int(a[16])
                 blocksizes = a[18].split(',')[:-1]
                 blockstarts = a[20].split(',')[:-1]
                 readstarts = a[19].split(',')[:-1]
 
+                # account for direction in naming
                 if direction == '+':
                     start_seq, end_seq = 'S', 'E'
                     left_match, right_match = 'TSS', 'TES'
@@ -252,13 +296,15 @@ def collect_reads(content_file):
                 previous_blockend = np.inf
                 intron, indel, indel1 = 0, 0, 0
                 low_bounds, up_bounds = [], []
-                aligned_bases=0
+                aligned_bases = 0
+                # for each alignment block
                 for x in range(0, len(blocksizes)):
                     blockstart = int(blockstarts[x])
                     blocksize = int(blocksizes[x])
                     readstart = int(readstarts[x])
                     aligned_bases += blocksize
                     blockend = blockstart + blocksize
+                    # only take alignment blocks >10bp
                     if blocksize > 10:
                         for y in range(0, blocksize, 10):
                             rounded = myround(blockstart + y)
@@ -268,9 +314,7 @@ def collect_reads(content_file):
                             coverage_set.add(rounded)
                         if previous_start == -1:
                             previous_start = blockstart
-                            min_length = 10
-                        else:
-                            min_length = 10
+                        min_length = 10
 
                         if blockstart - previous_blockend > 20:
                             previous_start = blockstart
@@ -307,6 +351,7 @@ def collect_reads(content_file):
                     except:
                         histo_coverage[chromosome][rounded] = 1
 
+                # collect chromosome info either to the left or right of a bound
                 if aligned_bases/length > 0.70:
                     for low_bound, indel1, blockend in low_bounds:
                         chromosome_list_left.add(chromosome)
@@ -334,18 +379,26 @@ def collect_reads(content_file):
 
 def parse_genome(input_file, left_bounds, right_bounds):
     '''
-    Insert docstring
+    Takes a GTF file and dictionaries for left and right bounds
+    and returns the same left and right bound dictionaries.
+
+    Left/right bounds: dictionary of dictionaries of lists.
+    {chromosome:{direction:[start/stop positions]}}
     '''
 
+    # make a dictionary of transcript ID to its
+    # chr name, start pos, stop pos, and direction
+    # {transcript_ID:[(chr, start, stop, dir), (...) ...], ...}
     gene_dict = {}
     for line in open(input_file):
         a = line.strip().split('\t')
         if len(a) > 7:
-             if a[2] == 'exon':
-                 testKey = a[8].split('; transcript_id "')[1].split('"')[0]
-                 if not gene_dict.get(testKey):
-                     gene_dict[testKey] = []
-                 gene_dict[testKey].append((a[0], a[3], a[4], a[6]))
+            if a[2] == 'exon':
+                testKey = a[8].split('; transcript_id "')[1].split('"')[0]
+                if not gene_dict.get(testKey):
+                    gene_dict[testKey] = []
+                # append chr name, start pos, end pos, strand
+                gene_dict[testKey].append((a[0], a[3], a[4], a[6]))
 
     read_list = []
     for transcript_id in gene_dict:
@@ -357,9 +410,13 @@ def parse_genome(input_file, left_bounds, right_bounds):
             left_bounds[chromosome]['5'], right_bounds[chromosome]['5'] = [], []
             left_bounds[chromosome]['3'], right_bounds[chromosome]['3'] = [], []
 
+        # first start
         start = sorted(transcript_data, key=lambda x: int(x[1]))[0][1]
+        # last end
         end = sorted(transcript_data, key=lambda x: int(x[2]), reverse=True)[0][2]
 
+        # organize data by direction
+        # only take the absolute start and absolute end for each transcript
         for entry in transcript_data:
             if entry[1] != start:
                 if entry[3] == '+':
@@ -375,7 +432,14 @@ def parse_genome(input_file, left_bounds, right_bounds):
 
 def make_genome_bins(bounds, side, peaks, chromosome, peak_areas):
     '''
-    Insert docstring
+    Takes the bounds for a chromosome, which side, the number of peaks,
+    which chromosome, and peak areas and returns the number of peaks as
+    well as the peak areas.
+        bounds (dict): {chromosome:{direction:[start/stop positions]}}
+        side (str): left or right (l/r)
+        peaks (int): number of peaks
+        chromosome (str): which chromosome
+        peak_areas (dict): keeps track of chromosome regions with peaks
     '''
 
     for type1 in ['5', '3']:
