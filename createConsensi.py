@@ -97,7 +97,7 @@ def read_fastq_file(seq_file):
     lineNum = 0
     seq_file_open = open(seq_file, 'r')
     while lineNum < length:
-        name_root = seq_file_open.readline().strip()[1:].split('_')
+        name_root = seq_file_open.readline().strip()[1:]
         name, seed = name_root[0], int(name_root[1])
         seq = seq_file_open.readline().strip()
         plus = seq_file_open.readline().strip()
@@ -193,7 +193,7 @@ def determine_consensus(name, fasta, fastq):
                       %s %s > %s 2> ./minimap2_messages.txt'
                       % (minimap2, input_cons, out_Fq, overlap))
             print('minimap2 done')
-            os.system('%s --sam --bq 5 -t 1\
+            os.system('%s -q 5 -t 1 \
                       %s %s %s %s >> ./racon_messages.txt 2>&1'
                       %(racon,out_Fq, overlap, input_cons, output_cons))
             print('racon done')
