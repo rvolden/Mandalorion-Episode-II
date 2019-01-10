@@ -89,22 +89,22 @@ def sort_reads_into_splice_junctions(content_file, splice_dict,
         readstarts = a[19].split(',')[:-1]
 
         for x in range(0, len(blocksizes)-1):
-                blockstart = int(blockstarts[x])
-                blocksize = int(blocksizes[x])
-                left_splice = blockstart + blocksize
-                right_splice = int(blockstarts[x+1])
-                if right_splice - left_splice > 50:
-                    try:
-                        left_splice_site = splice_dict[chromosome][left_splice]
-                    except:
-                        failed = True
-                    try:
-                        right_splice_site = splice_dict[chromosome][right_splice]
-                    except:
-                        failed = True
-                    if not failed:
-                        identity += str(left_splice_site) + '-' \
-                                    + str(right_splice_site) + '~'
+            blockstart = int(blockstarts[x])
+            blocksize = int(blocksizes[x])
+            left_splice = blockstart + blocksize
+            right_splice = int(blockstarts[x+1])
+            if right_splice - left_splice > 50:
+                try:
+                    left_splice_site = splice_dict[chromosome][left_splice]
+                except:
+                    failed = True
+                try:
+                    right_splice_site = splice_dict[chromosome][right_splice]
+                except:
+                    failed = True
+                if not failed:
+                    identity += str(left_splice_site) + '-' \
+                                + str(right_splice_site) + '~'
         if not failed:
             if not start_end_dict.get(identity):
                 start_end_dict[identity] = []
@@ -122,8 +122,6 @@ def define_start_end_sites(start_end_dict, individual_path, subreads):
     isoform_counter, isoform_dict = 0, {}
 
     for identity in start_end_dict:
-        # if 'chr16' in identity:
-        #     print(identity)
         positions = np.array(start_end_dict[identity])
         starts = np.array(positions[:,0], dtype=int)
         ends = np.array(positions[:,1], dtype=int)
@@ -161,8 +159,10 @@ def define_start_end_sites(start_end_dict, individual_path, subreads):
                 isoform_counter += 1
                 isoform_dict[new_identity] = isoform_counter
 
-            filename='Isoform'+str(isoform_dict[new_identity])
-
+            subfolder = str(int(isoform_dict[new_identity]/4000))
+            if subfolder not in os.listdir(individual_path + '/parsed_reads/'):
+                os.makedirs(individual_path + '/parsed_reads/' + subfolder)
+            filename = subfolder + '/Isoform' + str(isoform_dict[new_identity])
             out_reads_fasta = open(individual_path + '/parsed_reads/'
                                    + filename + '.fasta', 'a')
             out_reads_subreads = open(individual_path + '/parsed_reads/'
@@ -178,38 +178,52 @@ def define_start_end_sites(start_end_dict, individual_path, subreads):
             subread_list = subreads[read]
             for subread, sequence, qual in subread_list:
                 out_reads_subreads.write(subread + '\n' + sequence
-                                         + '\n+\n' + qual +'\n')
+                                         + '\n+\n' + qual + '\n')
             out_reads_subreads.close()
-
 
     out = open(individual_path + 'isoform_list', 'w')
     for item in file_set:
         out.write(item)
     out.close()
 
-def read_subreads(seq_file, infile):
-    read_seq = {}
-    length = 0
-    for line2 in open(seq_file):
-        length += 1
-    seq_file_open = open(seq_file,'r')
-    counter = 0
-    for line in open(infile):
+def read_subreads(fastqFile, pslFile):
+    '''
+    Takes a PSL and a FASTQ file and returns dictionary of lists
+    readDict {'name_root':['full_header', seq, quality]...}
+    '''
+    readDict = {}
+    # collect keys from the psl file
+    for line in open(pslFile):
         name = line.strip().split('\t')[9].split('_')[0]
-        read_seq[name] = []
+        readDict[name] = []
 
-    while counter < length:
-        name = seq_file_open.readline().strip()
-        seq = seq_file_open.readline().strip()
-        plus = seq_file_open.readline().strip()
-        qual = seq_file_open.readline().strip()
-        root_name = name[1:].split('_')[0]
-        try:
-            read_seq[root_name].append((name, seq, qual))
-        except:
-            pass
-        counter += 4
-    return read_seq
+    # match keys between the psl and fastq
+    lineNum, lastPlus, lastHead, skip = 0, False, '', False
+    for line in open(fastqFile):
+        line = line.rstrip()
+        if not line:
+            continue
+
+        if lineNum % 4 == 0 and line[0] == '@':
+            root = line[1:].split('_')[0]
+            if root not in readDict.keys():
+                skip = True
+                continue
+            skip = False
+            readDict[root], lastHead = [line], root
+
+        if lineNum % 4 == 1 and not skip:
+            readDict[lastHead].append(line)
+
+        if lineNum % 4 == 2 and not skip:
+            lastPlus = True
+
+        if lineNum % 4 == 3 and lastPlus and not skip:
+            readDict[lastHead].append(line)
+            lastPlus, lastHead = False, ''
+
+        lineNum += 1
+    return readDict
 
 def main():
     for line in open(content_file):
@@ -220,7 +234,7 @@ def main():
       individual_path = b[2]
       subreads_file = b[3]
       os.system('mkdir ' + individual_path + '/parsed_reads')
-      os.system('rm ' + individual_path + '/parsed_reads/*')
+      os.system('rm -r ' + individual_path + '/parsed_reads/*')
       subreads = read_subreads(subreads_file, infile)
       splice_dict = splice_dict = collect_splice_events(path)
       start_end_dict = sort_reads_into_splice_junctions(content_file, splice_dict,

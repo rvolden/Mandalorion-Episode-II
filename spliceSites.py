@@ -124,23 +124,19 @@ def determine_coverage(coverage_area, chromosome, reverse,
     coverage = max(coverage)
     return coverage, coverage_area
 
-def read_seq_file(seq_file):
-    '''
-    Reads FASTA files and returns a dictionary of header:seq.
-    '''
-    read_seq = {}
-    length = 0
-    for line2 in open(seq_file):
-        length += 1
-    seq_file_open = open(seq_file, 'r')
-    counter = 0
-    while counter < length:
-        fasta_name = seq_file_open.readline().strip()
-        fasta_seq = seq_file_open.readline().strip()
-        fasta_name = fasta_name[1:]
-        read_seq[fasta_name] = fasta_seq
-        counter += 2
-    return read_seq
+def read_seq_file(inFile):
+    '''Reads in FASTA files, returns a dict of header:sequence'''
+    readDict = {}
+    for line in open(inFile):
+        line = line.rstrip()
+        if not line:
+            continue
+        if line.startswith('>'):
+            readDict[line[1:]] = ''
+            lastHead = line[1:]
+        else:
+            readDict[lastHead] += line
+    return readDict
 
 def myround(x, base=10):
     '''Rounds to the nearest base'''
