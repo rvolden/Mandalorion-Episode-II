@@ -50,6 +50,8 @@ os.system('python3 spliceSites.py %s %s %s %s %s ' %(content_file, path, '0.05',
 os.system('python3 defineAndQuantifyIsoforms.py %s %s %s %s' %(content_file, path,downstream_buffer,upstream_buffer)) # This script sort raw reads into isoform bins. The two number variables determine the window around TSS and TES in which read ends can fall and still be matched to the site.
 
 for line in open(content_file):
+    if not line:
+        continue
     subpath = line.strip().split('\t')[2]
     os.system('python3 createConsensi.py -p %s -s %s -c %s -m %s' %(subpath, subsample_consensus, config_file, matrix))
     os.system('python3 filterIsoforms.py %s %s %s %s %s %s %s %s ' %(subpath,subpath+'/Isoform_Consensi.fasta',minimum_ratio,minimum_reads,maximum_5_overhang,maximum_3_overhang,minimum_5_overhang,minimum_3_overhang))
